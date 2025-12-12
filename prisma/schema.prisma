@@ -1,0 +1,530 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 기존 TIRO 테이블 (읽기/쓰기)
+// ============================================
+
+model User {
+  id                              String               @id @default(cuid())
+  email                           String               @unique
+  name                            String?
+  password                        String?
+  avatar                          String?
+  subscriptionTier                SubscriptionTier     @default(FREE)
+  subscriptionExpiry              DateTime?
+  createdAt                       DateTime             @default(now())
+  updatedAt                       DateTime             @updatedAt
+  lastLoginAt                     DateTime?
+  deletedAt                       DateTime?
+  emailVerificationToken          String?
+  emailVerificationTokenExpiresAt DateTime?
+  emailVerifiedAt                 DateTime?
+  isEmailVerified                 Boolean              @default(false)
+  chargedCredit                   Int                  @default(0)
+  creditBalance                   Int                  @default(1000)
+  dailyCredit                     Int                  @default(0)
+  dailyCreditResetAt              DateTime?
+  weeklyCredit                    Int                  @default(0)
+  weeklyCreditResetAt             DateTime?
+  asyncJobs                       AsyncJob[]
+  chatMessages                    ChatMessage[]
+  creditTransactions              CreditTransaction[]
+  episodes                        Episode[]
+  oauthAccounts                   OAuthAccount[]
+  projects                        Project[]
+  promotionCodeUsages             PromotionCodeUsage[]
+  reviews                         Review[]
+  revisions                       Revision[]
+  settings                        Setting[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@index([emailVerificationToken])
+  @@map("users")
+}
+
+model OAuthAccount {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  scope             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([provider])
+  @@map("oauth_accounts")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  userId         String
+  title          String
+  genre          String?
+  targetEpisodes Int?
+  description    String?
+  status         ProjectStatus @default(ACTIVE)
+  currentEpisode Int           @default(0)
+  settingsData   Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  writingStyle   String?
+  asyncJobs      AsyncJob[]
+  chatMessages   ChatMessage[]
+  episodes       Episode[]
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews        Review[]
+  settings       Setting[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Episode {
+  id                   String          @id @default(cuid())
+  projectId            String
+  episodeNumber        Int
+  title                String?
+  summary              String?
+  events               Json            @default("[]")
+  contextSnapshot      Json?
+  wordCount            Int             @default(0)
+  characterCount       Int             @default(0)
+  estimatedReadingTime Int             @default(0)
+  status               EpisodeStatus   @default(DRAFT)
+  generationMode       GenerationMode?
+  promptUsed           String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  publishedAt          DateTime?
+  activeRevisionId     String?         @unique
+  userId               String
+  creditsUsed          Int             @default(0)
+  asyncJobs            AsyncJob[]
+  activeRevision       Revision?       @relation("ActiveRevision", fields: [activeRevisionId], references: [id])
+  project              Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions            Revision[]      @relation("EpisodeRevisions")
+
+  @@unique([projectId, episodeNumber])
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@map("episodes")
+}
+
+model Revision {
+  id                String   @id @default(cuid())
+  episodeId         String
+  version           String
+  content           String
+  changeDescription String?
+  wordCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  userId            String
+  creditsUsed       Int      @default(0)
+  grammarReviewed   Boolean  @default(false)
+  settingsReviewed  Boolean  @default(false)
+  analyzed          Boolean  @default(false)
+  parentRevisionId  String?
+
+  activeForEpisode Episode?   @relation("ActiveRevision")
+  episode          Episode    @relation("EpisodeRevisions", fields: [episodeId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentRevision   Revision?  @relation("RevisionHistory", fields: [parentRevisionId], references: [id], onDelete: SetNull)
+  childRevisions   Revision[] @relation("RevisionHistory")
+
+  @@index([userId])
+  @@index([episodeId])
+  @@index([createdAt])
+  @@index([parentRevisionId])
+  @@map("revisions")
+}
+
+model Setting {
+  id        String      @id @default(cuid())
+  projectId String
+  category  String
+  type      SettingType
+  data      Json
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  userId    String
+  icon      String?
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([projectId, category])
+  @@map("settings")
+}
+
+model CreditTransaction {
+  id            String                @id @default(cuid())
+  userId        String
+  amount        Int
+  type          CreditTransactionType
+  description   String?
+  creditType    CreditType?
+  paymentId     String?
+  paymentMethod String?
+  priceKRW      Int?
+  metadata      Json                  @default("{}")
+  createdAt     DateTime              @default(now())
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([creditType])
+  @@map("credit_transactions")
+}
+
+model AsyncJob {
+  id                String         @id @default(cuid())
+  userId            String
+  projectId         String?
+  jobType           AsyncJobType
+  status            AsyncJobStatus @default(PENDING)
+  progress          Int            @default(0)
+  input             Json
+  result            Json?
+  error             String?
+  timeout           Int?
+  estimatedDuration Int?
+  dismissed         Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  startedAt         DateTime?
+  completedAt       DateTime?
+  episodeId         String?
+  creditsUsed       Int            @default(0)
+  dependsOnJobId    String?
+
+  episode Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([episodeId])
+  @@index([status])
+  @@index([jobType])
+  @@index([dependsOnJobId])
+  @@map("async_jobs")
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  projectId   String
+  userId      String
+  scope       ReviewScope
+  episodeIds  String[]
+  issues      Json
+  summary     Json
+  status      ReviewStatus @default(COMPLETED)
+  createdAt   DateTime     @default(now())
+  creditsUsed Int          @default(0)
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  projectId  String
+  episodeId  String?
+  revisionId String?
+  userId     String
+  role       ChatRole
+  content    String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  turnNumber Int?
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([episodeId])
+  @@index([revisionId])
+  @@index([userId])
+  @@index([projectId, createdAt])
+  @@index([projectId, turnNumber])
+  @@index([episodeId, revisionId])
+  @@map("chat_messages")
+}
+
+model SettingSnapshot {
+  id         String   @id @default(cuid())
+  projectId  String
+  userId     String
+  turnNumber Int
+  settings   Json
+  createdAt  DateTime @default(now())
+
+  @@unique([projectId, turnNumber])
+  @@index([projectId, turnNumber])
+  @@map("setting_snapshots")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  changes   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AiCreditRate {
+  id        String   @id @default(cuid())
+  provider  String
+  model     String
+  input     Float
+  output    Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, model])
+  @@index([provider])
+  @@index([isActive])
+  @@map("ai_credit_rates")
+}
+
+model AiProviderConfig {
+  id        String    @id @default(cuid())
+  feature   AiFeature @unique
+  provider  String
+  model     String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([feature])
+  @@index([isActive])
+  @@map("ai_provider_configs")
+}
+
+model PromotionCode {
+  id           String              @id @default(cuid())
+  code         String              @unique
+  type         PromotionCodeType
+  creditAmount Int
+  quota        Int?
+  usedCount    Int                 @default(0)
+  isActive     Boolean             @default(true)
+  description  String?
+  expiresAt    DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  usages       PromotionCodeUsage[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("promotion_codes")
+}
+
+model PromotionCodeUsage {
+  id              String        @id @default(cuid())
+  promotionCodeId String
+  userId          String
+  creditAmount    Int
+  createdAt       DateTime      @default(now())
+
+  promotionCode PromotionCode @relation(fields: [promotionCodeId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionCodeId, userId])
+  @@index([promotionCodeId])
+  @@index([userId])
+  @@map("promotion_code_usages")
+}
+
+// ============================================
+// 관리자 전용 테이블 (신규)
+// ============================================
+
+model AdminWhitelist {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  role        AdminRole @default(ADMIN)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdBy   String?   @map("created_by")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  @@index([email])
+  @@index([isActive])
+  @@map("admin_whitelist")
+}
+
+model AdminActivityLog {
+  id         String   @id @default(cuid())
+  adminEmail String   @map("admin_email")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([adminEmail])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
+  @@map("admin_activity_logs")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("system_settings")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum CreditType {
+  SUBSCRIPTION
+  CHARGED
+}
+
+enum PromotionCodeType {
+  PUBLIC
+  PRIVATE
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  DELETED
+}
+
+enum EpisodeStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum GenerationMode {
+  INSTANT
+  BATCH
+}
+
+enum SettingType {
+  LIST
+  TEXT
+}
+
+enum CreditTransactionType {
+  PURCHASE
+  INITIAL_CREDIT
+  USAGE
+  REFUND
+  BONUS
+  SUBSCRIPTION
+}
+
+enum AsyncJobType {
+  EPISODE_GENERATION
+  BATCH_GENERATION
+  REVIEW
+  AUTO_FIX
+  BULK_EDIT
+  EXPORT
+  GRAMMAR_REVIEW
+  SETTINGS_REVIEW
+  ANALYZE
+}
+
+enum AsyncJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ReviewScope {
+  EPISODE
+  RANGE
+  ALL
+  SETTINGS
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+enum AiFeature {
+  EPISODE_GENERATION
+  EPISODE_REWRITE
+  ASSISTANT
+  REVIEW
+  CONTEXT_SNAPSHOT
+  ICON_SUGGESTION
+  JSON_FIX
+  GRAMMAR_REVIEW
+  SETTINGS_REVIEW
+  ANALYZE
+}
