@@ -7,9 +7,11 @@ import { Suspense } from 'react'
 function LoginContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  // AIDEV-NOTE: 로그인 후 원래 페이지로 리다이렉트하기 위한 callbackUrl 처리
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
 
   const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/dashboard' })
+    signIn('google', { callbackUrl })
   }
 
   return (

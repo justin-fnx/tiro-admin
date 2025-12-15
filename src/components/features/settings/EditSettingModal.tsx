@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -45,7 +46,7 @@ export function EditSettingModal({ setting }: EditSettingModalProps) {
         throw new Error('올바른 JSON 형식이 아닙니다.')
       }
 
-      const response = await fetch('/api/settings/system', {
+      const response = await fetchWithAuth('/api/settings/system', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -63,6 +64,7 @@ export function EditSettingModal({ setting }: EditSettingModalProps) {
       setOpen(false)
       router.refresh()
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert(error instanceof Error ? error.message : '오류가 발생했습니다.')
     } finally {
       setLoading(false)

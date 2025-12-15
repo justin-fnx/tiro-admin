@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ChatRole } from '@prisma/client'
+import { fetchWithAuth } from '@/lib/api/client'
 import {
   Dialog,
   DialogContent,
@@ -84,7 +85,7 @@ export function EpisodeDetailModal({ episodeId, open, onOpenChange }: EpisodeDet
     if (!episodeId) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/episodes/${episodeId}`)
+      const res = await fetchWithAuth(`/api/episodes/${episodeId}`)
       if (res.ok) {
         const data = await res.json()
         setEpisode(data)
@@ -94,6 +95,7 @@ export function EpisodeDetailModal({ episodeId, open, onOpenChange }: EpisodeDet
         }
       }
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       console.error('Failed to fetch episode detail:', error)
     } finally {
       setLoading(false)

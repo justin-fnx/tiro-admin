@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -54,7 +55,7 @@ export function EditCreditRateModal({ rate }: EditCreditRateModalProps) {
         throw new Error('비율은 0 이상이어야 합니다.')
       }
 
-      const response = await fetch(`/api/ai/credit-rates/${rate.id}`, {
+      const response = await fetchWithAuth(`/api/ai/credit-rates/${rate.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,6 +73,7 @@ export function EditCreditRateModal({ rate }: EditCreditRateModalProps) {
       setOpen(false)
       router.refresh()
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert(error instanceof Error ? error.message : '오류가 발생했습니다.')
     } finally {
       setLoading(false)

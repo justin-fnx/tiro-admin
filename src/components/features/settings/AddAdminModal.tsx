@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -38,7 +39,7 @@ export function AddAdminModal() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/settings/admins', {
+      const response = await fetchWithAuth('/api/settings/admins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -53,6 +54,7 @@ export function AddAdminModal() {
       setFormData({ email: '', name: '', role: 'ADMIN' })
       router.refresh()
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert(error instanceof Error ? error.message : '오류가 발생했습니다.')
     } finally {
       setLoading(false)

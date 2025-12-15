@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -48,7 +49,7 @@ export function EditProviderConfigModal({ config }: EditProviderConfigModalProps
         throw new Error('프로바이더와 모델명은 필수입니다.')
       }
 
-      const response = await fetch(`/api/ai/providers/${config.feature}`, {
+      const response = await fetchWithAuth(`/api/ai/providers/${config.feature}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,6 +67,7 @@ export function EditProviderConfigModal({ config }: EditProviderConfigModalProps
       setOpen(false)
       router.refresh()
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert(error instanceof Error ? error.message : '오류가 발생했습니다.')
     } finally {
       setLoading(false)

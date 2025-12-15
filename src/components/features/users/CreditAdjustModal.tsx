@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -40,7 +41,7 @@ export function CreditAdjustModal({ userId, currentCredits }: CreditAdjustModalP
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/users/${userId}/credits`, {
+      const res = await fetchWithAuth(`/api/users/${userId}/credits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -59,7 +60,8 @@ export function CreditAdjustModal({ userId, currentCredits }: CreditAdjustModalP
         const data = await res.json()
         alert(data.error || '크레딧 조정에 실패했습니다.')
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert('크레딧 조정에 실패했습니다.')
     } finally {
       setLoading(false)

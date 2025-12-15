@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithAuth } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -29,7 +30,7 @@ export function DeleteReportButton({ reportId, title }: DeleteReportButtonProps)
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/reports/${reportId}`, {
+      const response = await fetchWithAuth(`/api/reports/${reportId}`, {
         method: 'DELETE',
       })
 
@@ -40,6 +41,7 @@ export function DeleteReportButton({ reportId, title }: DeleteReportButtonProps)
 
       router.refresh()
     } catch (error) {
+      if (error instanceof Error && error.message.includes('인증이 만료')) return
       alert(error instanceof Error ? error.message : '오류가 발생했습니다.')
     } finally {
       setLoading(false)
