@@ -2,6 +2,8 @@ import { prisma } from '@/lib/db/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { EditCreditRateModal } from '@/components/features/ai/EditCreditRateModal'
+import { AiSettingsNav } from '@/components/features/ai/AiSettingsNav'
 
 async function getCreditRates() {
   const rates = await prisma.aiCreditRate.findMany({
@@ -30,9 +32,11 @@ export default async function CreditRatesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">AI 크레딧 비율 관리</h1>
+        <h1 className="text-3xl font-bold tracking-tight">AI 설정 관리</h1>
         <p className="text-muted-foreground">프로바이더/모델별 크레딧 비율을 관리합니다.</p>
       </div>
+
+      <AiSettingsNav />
 
       {providers.length === 0 ? (
         <Card>
@@ -56,6 +60,7 @@ export default async function CreditRatesPage() {
                       <TableHead className="text-right">입력 비율</TableHead>
                       <TableHead className="text-right">출력 비율</TableHead>
                       <TableHead>상태</TableHead>
+                      <TableHead className="w-[60px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -68,6 +73,9 @@ export default async function CreditRatesPage() {
                           <Badge variant={rate.isActive ? 'success' : 'secondary'}>
                             {rate.isActive ? '활성' : '비활성'}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <EditCreditRateModal rate={rate} />
                         </TableCell>
                       </TableRow>
                     ))}
