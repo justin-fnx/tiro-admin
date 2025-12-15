@@ -15,6 +15,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  MessageSquareText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { title: 'AI 설정', href: '/ai/credit-rates', icon: Bot },
   { title: '크레딧 관리', href: '/credits', icon: CreditCard },
   { title: '프로모션', href: '/promotions', icon: Tag },
+  { title: '피드백 관리', href: '/reports', icon: MessageSquareText },
   { title: '작업 모니터링', href: '/jobs', icon: Activity },
   { title: '감사 로그', href: '/audit-logs', icon: FileText },
 ]

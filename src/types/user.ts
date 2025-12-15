@@ -5,7 +5,6 @@ export interface UserListItem {
   email: string
   name: string | null
   subscriptionTier: SubscriptionTier
-  creditBalance: number
   chargedCredit: number
   dailyCredit: number
   weeklyCredit: number

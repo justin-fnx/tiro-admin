@@ -34,7 +34,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         avatar: true,
         subscriptionTier: true,
         subscriptionExpiry: true,
-        creditBalance: true,
         chargedCredit: true,
         dailyCredit: true,
         weeklyCredit: true,

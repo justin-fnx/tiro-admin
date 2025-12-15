@@ -35,7 +35,9 @@ export function UserTable({ users }: UserTableProps) {
             <TableHead>이메일</TableHead>
             <TableHead>이름</TableHead>
             <TableHead>플랜</TableHead>
-            <TableHead className="text-right">크레딧</TableHead>
+            <TableHead className="text-right">일간 크레딧</TableHead>
+            <TableHead className="text-right">주간 크레딧</TableHead>
+            <TableHead className="text-right">충전 크레딧</TableHead>
             <TableHead className="text-right">프로젝트</TableHead>
             <TableHead>가입일</TableHead>
             <TableHead>상태</TableHead>
@@ -45,7 +47,7 @@ export function UserTable({ users }: UserTableProps) {
         <TableBody>
           {users.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                 사용자가 없습니다.
               </TableCell>
             </TableRow>
@@ -61,7 +63,9 @@ export function UserTable({ users }: UserTableProps) {
                 <TableCell>
                   <Badge variant={tierColors[user.subscriptionTier]}>{user.subscriptionTier}</Badge>
                 </TableCell>
-                <TableCell className="text-right">{formatNumber(user.creditBalance)}</TableCell>
+                <TableCell className="text-right">{formatNumber(user.dailyCredit)}</TableCell>
+                <TableCell className="text-right">{formatNumber(user.weeklyCredit)}</TableCell>
+                <TableCell className="text-right">{formatNumber(user.chargedCredit)}</TableCell>
                 <TableCell className="text-right">{user._count.projects}</TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>

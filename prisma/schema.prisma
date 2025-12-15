@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// 기존 TIRO 테이블 (읽기/쓰기)
-// ============================================
-
 model User {
   id                              String               @id @default(cuid())
   email                           String               @unique
@@ -28,7 +24,6 @@ model User {
   emailVerifiedAt                 DateTime?
   isEmailVerified                 Boolean              @default(false)
   chargedCredit                   Int                  @default(0)
-  creditBalance                   Int                  @default(1000)
   dailyCredit                     Int                  @default(0)
   dailyCreditResetAt              DateTime?
   weeklyCredit                    Int                  @default(0)
@@ -43,6 +38,7 @@ model User {
   reviews                         Review[]
   revisions                       Revision[]
   settings                        Setting[]
+  userReports                     UserReport[]
 
   @@index([email])
   @@index([deletedAt])
@@ -128,25 +124,24 @@ model Episode {
 }
 
 model Revision {
-  id                String   @id @default(cuid())
+  id                String     @id @default(cuid())
   episodeId         String
   version           String
   content           String
   changeDescription String?
-  wordCount         Int      @default(0)
-  createdAt         DateTime @default(now())
+  wordCount         Int        @default(0)
+  createdAt         DateTime   @default(now())
   userId            String
-  creditsUsed       Int      @default(0)
-  grammarReviewed   Boolean  @default(false)
-  settingsReviewed  Boolean  @default(false)
-  analyzed          Boolean  @default(false)
-  parentRevisionId  String?
-
-  activeForEpisode Episode?   @relation("ActiveRevision")
-  episode          Episode    @relation("EpisodeRevisions", fields: [episodeId], references: [id], onDelete: Cascade)
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parentRevision   Revision?  @relation("RevisionHistory", fields: [parentRevisionId], references: [id], onDelete: SetNull)
-  childRevisions   Revision[] @relation("RevisionHistory")
+  creditsUsed       Int        @default(0)
+  grammarReviewed   Boolean    @default(false)
+  settingsReviewed  Boolean    @default(false)
+  analyzed          Boolean    @default(false)
+  parentRevisionId  String?    @db.VarChar(30)
+  activeForEpisode  Episode?   @relation("ActiveRevision")
+  episode           Episode    @relation("EpisodeRevisions", fields: [episodeId], references: [id], onDelete: Cascade)
+  parentRevision    Revision?  @relation("RevisionHistory", fields: [parentRevisionId], references: [id])
+  childRevisions    Revision[] @relation("RevisionHistory")
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([episodeId])
@@ -169,6 +164,7 @@ model Setting {
   project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([projectId, userId, category])
   @@index([userId])
   @@index([projectId])
   @@index([projectId, category])
@@ -176,7 +172,7 @@ model Setting {
 }
 
 model CreditTransaction {
-  id            String                @id @default(cuid())
+  id            String                  @id @default(cuid())
   userId        String
   amount        Int
   type          CreditTransactionType
@@ -185,14 +181,18 @@ model CreditTransaction {
   paymentId     String?
   paymentMethod String?
   priceKRW      Int?
-  metadata      Json                  @default("{}")
-  createdAt     DateTime              @default(now())
-  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metadata      Json                    @default("{}")
+  createdAt     DateTime                @default(now())
+  status        CreditTransactionStatus @default(SUCCESS)
+  failedAt      DateTime?
+  failedReason  String?
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
   @@index([createdAt])
   @@index([creditType])
+  @@index([status])
   @@map("credit_transactions")
 }
 
@@ -206,20 +206,19 @@ model AsyncJob {
   input             Json
   result            Json?
   error             String?
-  timeout           Int?
   estimatedDuration Int?
-  dismissed         Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   startedAt         DateTime?
   completedAt       DateTime?
   episodeId         String?
   creditsUsed       Int            @default(0)
+  timeout           Int?
+  dismissed         Boolean        @default(false)
   dependsOnJobId    String?
-
-  episode Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode           Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  project           Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([projectId])
@@ -253,14 +252,14 @@ model Review {
 model ChatMessage {
   id         String   @id @default(cuid())
   projectId  String
-  episodeId  String?
-  revisionId String?
   userId     String
   role       ChatRole
   content    String
   metadata   Json?
   createdAt  DateTime @default(now())
   turnNumber Int?
+  episodeId  String?
+  revisionId String?
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -335,17 +334,17 @@ model AiProviderConfig {
 }
 
 model PromotionCode {
-  id           String              @id @default(cuid())
-  code         String              @unique
+  id           String               @id @default(cuid())
+  code         String               @unique
   type         PromotionCodeType
   creditAmount Int
   quota        Int?
-  usedCount    Int                 @default(0)
-  isActive     Boolean             @default(true)
+  usedCount    Int                  @default(0)
+  isActive     Boolean              @default(true)
   description  String?
   expiresAt    DateTime?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   usages       PromotionCodeUsage[]
 
   @@index([code])
@@ -359,19 +358,14 @@ model PromotionCodeUsage {
   userId          String
   creditAmount    Int
   createdAt       DateTime      @default(now())
-
-  promotionCode PromotionCode @relation(fields: [promotionCodeId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotionCode   PromotionCode @relation(fields: [promotionCodeId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([promotionCodeId, userId])
   @@index([promotionCodeId])
   @@index([userId])
   @@map("promotion_code_usages")
 }
-
-// ============================================
-// 관리자 전용 테이블 (신규)
-// ============================================
 
 model AdminWhitelist {
   id          String    @id @default(cuid())
@@ -417,9 +411,27 @@ model SystemSetting {
   @@map("system_settings")
 }
 
-// ============================================
-// Enums
-// ============================================
+model UserReport {
+  id        String           @id @default(cuid())
+  userId    String
+  type      UserReportType   @default(BUG)
+  status    UserReportStatus @default(PENDING)
+  title     String
+  content   String
+  pageUrl   String?
+  userAgent String?
+  metadata  Json             @default("{}")
+  adminNote String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("user_reports")
+}
 
 enum AdminRole {
   ADMIN
@@ -519,7 +531,7 @@ enum ChatRole {
 enum AiFeature {
   EPISODE_GENERATION
   EPISODE_REWRITE
-  ASSISTANT
+  SETTING_SUGGESTION
   REVIEW
   CONTEXT_SNAPSHOT
   ICON_SUGGESTION
@@ -527,4 +539,24 @@ enum AiFeature {
   GRAMMAR_REVIEW
   SETTINGS_REVIEW
   ANALYZE
+  ASSISTANT
+}
+
+enum UserReportType {
+  BUG
+  QUESTION
+  FEATURE
+  OTHER
+}
+
+enum UserReportStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum CreditTransactionStatus {
+  SUCCESS
+  FAILED
 }

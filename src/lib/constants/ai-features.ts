@@ -4,6 +4,7 @@ import { AiFeature } from '@prisma/client'
 export const featureLabels: Record<AiFeature, string> = {
   EPISODE_GENERATION: '에피소드 생성',
   EPISODE_REWRITE: '에피소드 다시 쓰기',
+  SETTING_SUGGESTION: '설정 제안',
   ASSISTANT: '어시스턴트',
   REVIEW: '리뷰',
   CONTEXT_SNAPSHOT: '컨텍스트 스냅샷',

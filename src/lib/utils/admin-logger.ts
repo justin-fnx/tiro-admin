@@ -63,4 +63,9 @@ export const AdminActions = {
 
   // 시스템 설정 관련
   SETTING_UPDATE: 'setting.update',
+
+  // 피드백/리포트 관련
+  REPORT_VIEW: 'report.view',
+  REPORT_UPDATE: 'report.update',
+  REPORT_DELETE: 'report.delete',
 } as const

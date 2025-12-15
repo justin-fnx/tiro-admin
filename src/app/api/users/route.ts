@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
           email: true,
           name: true,
           subscriptionTier: true,
-          creditBalance: true,
           chargedCredit: true,
           dailyCredit: true,
           weeklyCredit: true,

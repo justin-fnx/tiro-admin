@@ -171,10 +171,6 @@ export default async function UserDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">총 잔액</span>
-              <span className="font-bold">{formatNumber(user.creditBalance)}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-muted-foreground">충전 크레딧</span>
               <span>{formatNumber(user.chargedCredit)}</span>
             </div>

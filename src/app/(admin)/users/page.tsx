@@ -48,7 +48,6 @@ async function getUsers(searchParams: Awaited<PageProps['searchParams']>) {
         email: true,
         name: true,
         subscriptionTier: true,
-        creditBalance: true,
         chargedCredit: true,
         dailyCredit: true,
         weeklyCredit: true,

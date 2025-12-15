@@ -64,9 +64,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         break
     }
 
-    // creditBalance도 함께 업데이트 (총 잔액)
-    updateData.creditBalance = user.creditBalance + amount
-
     // 트랜잭션으로 사용자 업데이트 및 거래 내역 생성
     const [updatedUser] = await prisma.$transaction([
       prisma.user.update({
@@ -90,11 +87,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await logAdminActivity(admin.email, AdminActions.USER_CREDIT_ADJUST, 'user', id, {
       before: {
-        creditBalance: user.creditBalance,
         [creditType]: user[creditType as keyof typeof user],
       },
       after: {
-        creditBalance: updatedUser.creditBalance,
         [creditType]: updatedUser[creditType as keyof typeof updatedUser],
       },
       amount,
@@ -104,7 +99,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return successResponse({
       message: '크레딧이 조정되었습니다.',
       user: {
-        creditBalance: updatedUser.creditBalance,
         chargedCredit: updatedUser.chargedCredit,
         dailyCredit: updatedUser.dailyCredit,
         weeklyCredit: updatedUser.weeklyCredit,
