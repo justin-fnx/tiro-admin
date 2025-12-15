@@ -1,9 +1,11 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { prisma } from '@/lib/db/prisma'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/pagination'
+import { ProjectFilters } from '@/components/features/projects/ProjectFilters'
 import { formatDate } from '@/lib/utils/format'
 import { ProjectStatus, Prisma } from '@prisma/client'
 import { Eye, MoreHorizontal } from 'lucide-react'
@@ -19,6 +21,7 @@ interface PageProps {
     page?: string
     search?: string
     status?: string
+    sort?: string
   }>
 }
 
@@ -36,6 +39,26 @@ const statusLabels: Record<ProjectStatus, string> = {
   DELETED: '삭제',
 }
 
+// AIDEV-NOTE: 정렬 옵션 파싱 - sort 파라미터는 "field:direction" 형식 (예: "createdAt:desc")
+function parseSortParam(sort?: string): Prisma.ProjectOrderByWithRelationInput {
+  if (!sort) return { createdAt: 'desc' }
+
+  const [field, direction] = sort.split(':')
+  const order = direction === 'asc' ? 'asc' : 'desc'
+
+  switch (field) {
+    case 'title':
+      return { title: order }
+    case 'updatedAt':
+      return { updatedAt: order }
+    case 'episodes':
+      return { episodes: { _count: order } }
+    case 'createdAt':
+    default:
+      return { createdAt: order }
+  }
+}
+
 async function getProjects(searchParams: Awaited<PageProps['searchParams']>) {
   const page = Math.max(1, parseInt(searchParams.page || '1', 10))
   const limit = 20
@@ -46,6 +69,7 @@ async function getProjects(searchParams: Awaited<PageProps['searchParams']>) {
     where.OR = [
       { title: { contains: searchParams.search, mode: 'insensitive' } },
       { user: { email: { contains: searchParams.search, mode: 'insensitive' } } },
+      { user: { name: { contains: searchParams.search, mode: 'insensitive' } } },
     ]
   }
 
@@ -53,10 +77,12 @@ async function getProjects(searchParams: Awaited<PageProps['searchParams']>) {
     where.status = searchParams.status as ProjectStatus
   }
 
+  const orderBy = parseSortParam(searchParams.sort)
+
   const [projects, total] = await Promise.all([
     prisma.project.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
       select: {
@@ -96,6 +122,10 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
         <h1 className="text-3xl font-bold tracking-tight">프로젝트 관리</h1>
         <p className="text-muted-foreground">전체 {total}개의 프로젝트</p>
       </div>
+
+      <Suspense fallback={<div>Loading filters...</div>}>
+        <ProjectFilters />
+      </Suspense>
 
       <div className="rounded-md border">
         <Table>
