@@ -4,6 +4,8 @@ import { successResponse, serverErrorResponse, unauthorizedResponse } from '@/li
 import { CreditTransactionType } from '@prisma/client'
 import { format, subDays } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await requireAdmin()

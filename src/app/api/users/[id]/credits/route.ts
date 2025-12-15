@@ -11,6 +11,8 @@ import {
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 import { CreditTransactionType, CreditType } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }

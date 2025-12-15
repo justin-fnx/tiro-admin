@@ -10,6 +10,8 @@ import {
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 import { AdminRole } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await requireSuperAdmin()

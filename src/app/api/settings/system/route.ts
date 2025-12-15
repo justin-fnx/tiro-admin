@@ -9,6 +9,8 @@ import {
 } from '@/lib/api/response'
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await requireSuperAdmin()

@@ -4,6 +4,8 @@ import { requireAdmin } from '@/lib/auth/session'
 import { successResponse, errorResponse, serverErrorResponse, unauthorizedResponse } from '@/lib/api/response'
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const admin = await requireAdmin()

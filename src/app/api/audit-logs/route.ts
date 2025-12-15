@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db/prisma'
 import { requireAdmin } from '@/lib/auth/session'
 import { successResponse, serverErrorResponse, unauthorizedResponse } from '@/lib/api/response'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin()

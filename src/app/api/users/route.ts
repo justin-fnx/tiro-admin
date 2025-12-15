@@ -9,6 +9,8 @@ import {
 } from '@/lib/api/response'
 import { SubscriptionTier, Prisma } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin()

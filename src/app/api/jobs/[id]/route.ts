@@ -10,6 +10,8 @@ import {
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 import { AsyncJobStatus } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }

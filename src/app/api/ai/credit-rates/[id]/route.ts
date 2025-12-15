@@ -9,6 +9,8 @@ import {
 } from '@/lib/api/response'
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 
+export const dynamic = 'force-dynamic'
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }

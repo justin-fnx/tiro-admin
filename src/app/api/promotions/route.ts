@@ -11,6 +11,8 @@ import {
 import { logAdminActivity, AdminActions } from '@/lib/utils/admin-logger'
 import { PromotionCodeType, Prisma } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin()
