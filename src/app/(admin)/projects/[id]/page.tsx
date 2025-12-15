@@ -4,10 +4,10 @@ import { prisma } from '@/lib/db/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate, formatNumber } from '@/lib/utils/format'
 import { ArrowLeft, User, BookOpen, FileText, Zap } from 'lucide-react'
-import { ProjectStatus, EpisodeStatus } from '@prisma/client'
+import { ProjectStatus } from '@prisma/client'
+import { EpisodeTable } from '@/components/features/projects/EpisodeTable'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -25,14 +25,6 @@ const statusLabels: Record<ProjectStatus, string> = {
   COMPLETED: '완료',
   ARCHIVED: '보관',
   DELETED: '삭제',
-}
-
-const episodeStatusLabels: Record<EpisodeStatus, string> = {
-  DRAFT: '초안',
-  IN_PROGRESS: '진행중',
-  COMPLETED: '완료',
-  PUBLISHED: '발행',
-  ARCHIVED: '보관',
 }
 
 async function getProject(id: string) {
@@ -186,38 +178,13 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle>회차 목록</CardTitle>
-          <CardDescription>총 {project._count.episodes}개 회차</CardDescription>
+          <CardDescription>총 {project._count.episodes}개 회차 (클릭하여 상세 보기)</CardDescription>
         </CardHeader>
         <CardContent>
           {project.episodes.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">회차가 없습니다.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>회차</TableHead>
-                  <TableHead>제목</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead className="text-right">글자 수</TableHead>
-                  <TableHead className="text-right">크레딧</TableHead>
-                  <TableHead>생성일</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {project.episodes.map((episode) => (
-                  <TableRow key={episode.id}>
-                    <TableCell className="font-medium">{episode.episodeNumber}화</TableCell>
-                    <TableCell>{episode.title || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{episodeStatusLabels[episode.status]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{formatNumber(episode.wordCount)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(episode.creditsUsed)}</TableCell>
-                    <TableCell>{formatDate(episode.createdAt)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <EpisodeTable episodes={project.episodes} />
           )}
         </CardContent>
       </Card>
