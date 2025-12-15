@@ -7,6 +7,9 @@ export interface TransactionListItem {
   type: CreditTransactionType
   creditType: CreditType | null
   description: string | null
+  paymentId: string | null
+  paymentMethod: string | null
+  priceKRW: number | null
   createdAt: Date
   user: {
     email: string
