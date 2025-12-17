@@ -39,6 +39,7 @@ model User {
   revisions                       Revision[]
   settings                        Setting[]
   userReports                     UserReport[]
+  failedJsonLogs                  FailedJsonLog[]
 
   @@index([email])
   @@index([deletedAt])
@@ -84,6 +85,7 @@ model Project {
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   reviews        Review[]
   settings       Setting[]
+  failedJsonLogs FailedJsonLog[]
 
   @@index([userId])
   @@index([status])
@@ -431,6 +433,26 @@ model UserReport {
   @@index([status])
   @@index([createdAt])
   @@map("user_reports")
+}
+
+model FailedJsonLog {
+  id             String   @id @default(cuid())
+  projectId      String
+  episodeId      String?
+  userId         String
+  userMessage    String
+  rawJsonContent String   @db.Text
+  errorMessage   String?
+  context        Json?
+  createdAt      DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("failed_json_logs")
 }
 
 enum AdminRole {

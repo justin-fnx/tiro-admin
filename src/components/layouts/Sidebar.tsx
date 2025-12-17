@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquareText,
+  FileJson,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { title: '프로모션', href: '/promotions', icon: Tag },
   { title: '피드백 관리', href: '/reports', icon: MessageSquareText },
   { title: '작업 모니터링', href: '/jobs', icon: Activity },
+  { title: 'JSON 파싱 실패', href: '/failed-json-logs', icon: FileJson },
   { title: '감사 로그', href: '/audit-logs', icon: FileText },
 ]
 
