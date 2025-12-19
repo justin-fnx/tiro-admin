@@ -4,10 +4,14 @@ import { prisma } from '@/lib/db/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate, formatNumber } from '@/lib/utils/format'
 import { ArrowLeft, User, BookOpen, FileText, Zap } from 'lucide-react'
 import { ProjectStatus } from '@prisma/client'
 import { EpisodeTable } from '@/components/features/projects/EpisodeTable'
+import { ProjectSettingsPanel } from '@/components/features/projects/ProjectSettingsPanel'
+
+// AIDEV-NOTE: 프로젝트 상세 페이지 - 탭으로 회차와 설정+대화 구분
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -47,6 +51,31 @@ async function getProject(id: string) {
           createdAt: true,
         },
       },
+      settings: {
+        orderBy: [{ category: 'asc' }, { order: 'asc' }],
+        select: {
+          id: true,
+          category: true,
+          type: true,
+          data: true,
+          order: true,
+          icon: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      chatMessages: {
+        orderBy: { createdAt: 'asc' },
+        take: 100,
+        select: {
+          id: true,
+          role: true,
+          content: true,
+          turnNumber: true,
+          createdAt: true,
+          metadata: true,
+        },
+      },
       _count: {
         select: { episodes: true },
       },
@@ -72,6 +101,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   if (!project) {
     notFound()
   }
+
+  // settingsData를 Record<string, unknown>으로 안전하게 변환
+  const settingsData = (project.settingsData as Record<string, unknown>) || {}
 
   return (
     <div className="space-y-6">
@@ -175,19 +207,40 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>회차 목록</CardTitle>
-          <CardDescription>총 {project._count.episodes}개 회차 (클릭하여 상세 보기)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {project.episodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">회차가 없습니다.</p>
-          ) : (
-            <EpisodeTable episodes={project.episodes} />
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="episodes" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="episodes">
+            회차 ({project._count.episodes})
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            설정 + 대화
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="episodes" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>회차 목록</CardTitle>
+              <CardDescription>총 {project._count.episodes}개 회차 (클릭하여 상세 보기)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {project.episodes.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">회차가 없습니다.</p>
+              ) : (
+                <EpisodeTable episodes={project.episodes} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-6">
+          <ProjectSettingsPanel
+            settingsData={settingsData}
+            settings={project.settings}
+            chatMessages={project.chatMessages}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

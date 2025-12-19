@@ -71,6 +71,8 @@
 - [x] 프로젝트 상세 정보 조회
 - [x] 회차 목록 조회
 - [x] 회차 상세 정보 조회
+- [x] 작품 설정 데이터 조회 (settingsData, settings 테이블)
+- [x] 설정 대화 내용 조회 (chatMessages)
 
 ### 3.5 AI 설정 관리
 - [x] AI 프로바이더 설정 조회/수정
@@ -233,6 +235,11 @@
 ---
 
 ## 7. 변경 이력
+
+### 2025-12-19
+- 프로젝트 상세 페이지에 작품 설정 데이터 및 설정 대화 내용 조회 기능 추가
+- 프로젝트 상세 페이지 탭 UI 적용 (회차 / 설정+대화)
+- ProjectSettingsPanel 컴포넌트 신규 생성
 
 ### 2025-12-17
 - 프로젝트 문서화 완료 (ARCHITECTURE.md, TECHNICAL.md, UI-DESIGN.md, DATABASE.sql)
