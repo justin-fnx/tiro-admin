@@ -15,7 +15,15 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Plus } from 'lucide-react'
+import { PromotionCodeType } from '@prisma/client'
 
 export function CreatePromotionModal() {
   const router = useRouter()
@@ -23,6 +31,7 @@ export function CreatePromotionModal() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     code: '',
+    type: 'PUBLIC' as PromotionCodeType,
     creditAmount: '',
     quota: '',
     description: '',
@@ -39,6 +48,7 @@ export function CreatePromotionModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: formData.code.toUpperCase(),
+          type: formData.type,
           creditAmount: parseInt(formData.creditAmount),
           quota: formData.quota ? parseInt(formData.quota) : null,
           description: formData.description || null,
@@ -54,6 +64,7 @@ export function CreatePromotionModal() {
       setOpen(false)
       setFormData({
         code: '',
+        type: 'PUBLIC' as PromotionCodeType,
         creditAmount: '',
         quota: '',
         description: '',
@@ -93,6 +104,21 @@ export function CreatePromotionModal() {
                 required
               />
               <p className="text-xs text-muted-foreground">영문, 숫자, 하이픈, 언더스코어만 사용 가능</p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="type">타입</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value: PromotionCodeType) => setFormData({ ...formData, type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="타입 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PUBLIC">공개 (누구나 사용 가능)</SelectItem>
+                  <SelectItem value="PRIVATE">비공개 (특정 사용자만)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="creditAmount">크레딧 지급량</Label>
